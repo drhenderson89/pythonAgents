@@ -1,6 +1,12 @@
 # pythonAgents
 Creating python AI agents interacting with local Ollama LLM
 
+> ⚠️ **Development Toy / Not Production**
+>
+> This project is an experimental learning tool. It is **not production-ready** and should be used only in a **controlled, dockerized environment**.
+>
+> The agent can execute Python code via tools. To reduce risk, run it with container isolation and keep tool access limited to the mounted sandbox workspace.
+
 ## Overview
 This project implements an AI agent that can interact with your local file system, execute Python code, and perform calculations. The agent uses LangChain and Ollama for natural language understanding and tool execution.
 
@@ -38,7 +44,7 @@ The calculator module supports:
 - Python 3.11+
 - [uv](https://docs.astral.sh/uv/) installed
 - [Ollama](https://ollama.ai/) installed and running
-- A compatible model downloaded (e.g., `llama3.2`)
+- A compatible model downloaded (default in this project: `qwen2.5:7b-instruct`)
 
 ### Setup
 1. Clone this repository
@@ -52,7 +58,7 @@ The calculator module supports:
    ```
 4. Download a model if you haven't already:
    ```bash
-   ollama pull llama3.2
+   ollama pull qwen2.5:7b-instruct
    ```
 
 ## Usage
@@ -65,7 +71,7 @@ python -m cli.main
 
 With options:
 ```bash
-python -m cli.main --model llama3.2 --verbose --ollama-address http://localhost:11434
+python -m cli.main --model qwen2.5:7b-instruct --verbose --ollama-address http://localhost:11434
 ```
 
 ### Running the Containerized Stack (Web + Agent + Ollama)
@@ -92,7 +98,7 @@ Web conversation memory:
 - To start a fresh web conversation, clear browser local storage key `pythonagents.session_id`.
 
 ### Command Line Arguments
-- `--model`: Name of the Ollama model to use (default: `llama3.2`)
+- `--model`: Name of the Ollama model to use (default: `qwen2.5:7b-instruct`)
 - `--system-prompt`: Custom system prompt for the AI
 - `--ollama-address`: Ollama server address (default: `http://127.0.0.1:11434`)
 - `--max-iterations`: Maximum tool/reasoning steps per prompt turn
@@ -209,16 +215,18 @@ All tests should pass, covering:
 - Error handling
 
 ## Security Notes
+- This project is intended for development/testing and education, not production workloads
 - File operations are restricted to the configured working directory (`AGENT_WORKDIR`) and subdirectories
 - Python code execution runs in a restricted environment
 - Absolute paths and `..` are not allowed in file operations
 - In Docker Compose, the host filesystem is isolated from tools by mounting only `./agent_workspace` into `/workspace` in the agent container
+- Use Docker isolation and avoid mounting sensitive host paths, because agent tools can execute Python against mounted files
 
 ## Troubleshooting
 
 ### Model Not Found
 ```bash
-ollama pull llama3.2
+ollama pull qwen2.5:7b-instruct
 ```
 
 ### Connection Refused
@@ -239,4 +247,4 @@ uv add -r requirements.txt
 ```
 
 ## License
-See LICENSE file for details.
+This project is open source under the **MIT License**. See [LICENSE](LICENSE).
