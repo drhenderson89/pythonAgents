@@ -1,0 +1,56 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+      - ./ollama-init.sh:/ollama-init.sh
+    entrypoint: ["/bin/bash", "/ollama-init.sh"]
+    environment:
+      OLLAMA_MODEL: qwen2.5:7b-instruct
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent
+    container_name: pythonagents-agent
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: qwen2.5:7b-instruct
+      AGENT_WORKDIR: /workspace
+      AGENT_LOG_LEVEL: INFO
+    volumes:
+      - ./agent_workspace:/workspace
+    depends_on:
+      ollama:
+        condition: service_healthy
+    ports:
+      - "8001:8001"
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: pythonagents-web
+    environment:
+      AGENT_BASE_URL: http://agent:8001
+      AGENT_REQUEST_TIMEOUT: "600" # 10 minutes timeout for agent requests
+    depends_on:
+      agent:
+        condition: service_started
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+volumes:
+  ollama_data:
