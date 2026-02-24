@@ -57,7 +57,6 @@ HTML_PAGE = """
     const metadataBox = document.getElementById('metadata');
     const traceBox = document.getElementById('trace');
     const statusBox = document.getElementById('status');
-    const SESSION_KEY = 'pythonagents.session_id';
 
     function createSessionId() {
       if (window.crypto && typeof window.crypto.randomUUID === 'function') {
@@ -66,11 +65,9 @@ HTML_PAGE = """
       return `session-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     }
 
-    let sessionId = window.localStorage.getItem(SESSION_KEY);
-    if (!sessionId) {
-      sessionId = createSessionId();
-      window.localStorage.setItem(SESSION_KEY, sessionId);
-    }
+    // Create a new conversation session on each page load.
+    // This means browser refresh starts fresh context by default.
+    let sessionId = createSessionId();
 
     let processingTimer = null;
     let processingStartedAt = null;
@@ -124,7 +121,6 @@ HTML_PAGE = """
 
         if (data.session_id) {
           sessionId = data.session_id;
-          window.localStorage.setItem(SESSION_KEY, sessionId);
         }
 
         responseBox.textContent = data.response;

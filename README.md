@@ -93,9 +93,9 @@ docker compose down
 The agent container uses a bind mount (`./agent_workspace:/workspace`) so you can add context files from the host, and all file tools are sandboxed to that directory.
 
 Web conversation memory:
-- The web UI now sends a persistent `session_id` with each prompt.
+- The web UI sends a `session_id` with each prompt for the current page session.
 - The agent service keeps per-session message history in memory, so follow-up prompts can use prior tool outputs.
-- To start a fresh web conversation, clear browser local storage key `pythonagents.session_id`.
+- Refreshing the web page creates a new `session_id` and starts a fresh conversation context.
 
 ### Command Line Arguments
 - `--model`: Name of the Ollama model to use (default: `qwen2.5:7b-instruct`)

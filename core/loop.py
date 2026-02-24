@@ -292,17 +292,20 @@ def _python_execution_escalation_message(no_tool_response_turns: int) -> str:
         )
 
     return (
-        "Your next response must be a single tool call to execute_python_code and no plain text. "
-        "Use code equivalent to:\n"
-        "import os\n"
-        "parts = []\n"
-        "for name in sorted(os.listdir('.')):\n"
-        "    path = os.path.join('.', name)\n"
-        "    if os.path.isfile(path):\n"
-        "        with open(path, 'r', encoding='utf-8', errors='replace') as f:\n"
-        "            parts.append(f.read())\n"
-        "print(''.join(parts))\n"
-        "Then wait for the tool result."
+        "Your next response must be exactly one tool call to execute_python_code and no plain text. Generate a complete, syntactically"
+        " valid Python snippet that solves the user’s requested task, includes any required imports, handles obvious edge cases, and prints the"
+        " final result. Do not repeat prior failing code. After the tool returns, use that output to continue."
+        #"Your next response must be a single tool call to execute_python_code and no plain text. "
+        #"Use code equivalent to:\n"
+        #"import os\n"
+        #"parts = []\n"
+        #"for name in sorted(os.listdir('.')):\n"
+        #"    path = os.path.join('.', name)\n"
+        #"    if os.path.isfile(path):\n"
+        #"        with open(path, 'r', encoding='utf-8', errors='replace') as f:\n"
+        #"            parts.append(f.read())\n"
+        #"print(''.join(parts))\n"
+        #"Then wait for the tool result."
     )
 
 

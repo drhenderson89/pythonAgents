@@ -26,7 +26,7 @@ def prompt_likely_requires_tools(prompt: str) -> bool:
 def build_system_prompt(base_prompt: str, max_iterations: int, enforce_single_tool_step: bool = True) -> str:
     """Append execution-policy instructions to the base system prompt."""
     policy_lines = [
-        "You can call tools to interact with the filesystem and execute Python.",
+        "You can call tools to interact with the filesystem, call the calculator application and execute Python.",
         f"Keep working until the task is complete or the loop reaches {max_iterations} iterations.",
         "If a tool fails, revise arguments and retry when appropriate.",
         "Before finalizing, verify required file operations have been completed.",
