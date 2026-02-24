@@ -5,6 +5,7 @@ from pkg.render import format_json_output
 
 
 def main():
+    """Run calculator CLI and print evaluated expression output."""
     calculator = Calculator()
     if len(sys.argv) <= 1:
         print("Calculator App")

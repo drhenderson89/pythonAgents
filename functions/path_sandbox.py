@@ -6,6 +6,7 @@ from pathlib import Path
 
 def get_workdir() -> Path:
     """Return the configured sandbox root directory."""
+    # All filesystem tools operate relative to this directory.
     root = Path(os.getenv("AGENT_WORKDIR", ".")).resolve()
     root.mkdir(parents=True, exist_ok=True)
     return root
@@ -13,6 +14,7 @@ def get_workdir() -> Path:
 
 def resolve_in_workdir(user_path: str) -> Path:
     """Resolve a user path safely inside the sandbox root."""
+    # Reject absolute paths so callers cannot bypass sandbox rules.
     candidate = Path(user_path)
     if candidate.is_absolute():
         raise ValueError("Use relative paths only.")
@@ -20,6 +22,7 @@ def resolve_in_workdir(user_path: str) -> Path:
     root = get_workdir()
     resolved = (root / candidate).resolve()
 
+    # Ensure final resolved path is the root or a child of root.
     if resolved != root and root not in resolved.parents:
         raise ValueError("Cannot access paths outside the working directory.")
 

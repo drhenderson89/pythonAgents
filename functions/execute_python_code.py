@@ -23,6 +23,7 @@ def execute_python_code(code: str) -> str:
     old_cwd = os.getcwd()
     old_stdout = sys.stdout
     try:
+        # Run code from sandbox root so relative file operations stay isolated.
         os.chdir(get_workdir())
 
         # Capture stdout
@@ -65,7 +66,7 @@ def execute_python_code(code: str) -> str:
         output = captured_output.getvalue()
 
         if not output:
-            # If no print statements, try to get the last expression value
+            # If no print statements, expose the last assigned local value when available.
             if exec_locals:
                 last_value = list(exec_locals.values())[-1]
                 output = str(last_value)

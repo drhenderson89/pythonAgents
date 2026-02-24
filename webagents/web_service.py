@@ -170,18 +170,22 @@ HTML_PAGE = """
 
 @app.get("/health")
 def health() -> dict:
+    """Return web service health status."""
     return {"status": "ok"}
 
 
 @app.get("/", response_class=HTMLResponse)
 def index() -> str:
+    """Serve the embedded HTML user interface."""
     return HTML_PAGE
 
 
 @app.post("/api/chat")
 async def api_chat(chat_input: ChatInput) -> dict:
+    """Forward chat requests to the agent service and relay JSON responses."""
     agent_base_url = os.getenv("AGENT_BASE_URL", "http://127.0.0.1:8001")
     request_timeout_seconds = float(os.getenv("AGENT_REQUEST_TIMEOUT", "300"))
+    # Use explicit per-phase timeout values to handle long-running tool workflows.
     timeout = httpx.Timeout(
       connect=10.0,
       read=request_timeout_seconds,
@@ -191,6 +195,7 @@ async def api_chat(chat_input: ChatInput) -> dict:
 
     async with httpx.AsyncClient(timeout=timeout) as client:
       try:
+        # Forward UI prompt/session to the agent service; agent owns conversation state.
         response = await client.post(
           f"{agent_base_url}/chat",
           json={"prompt": chat_input.prompt, "session_id": chat_input.session_id},

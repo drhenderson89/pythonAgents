@@ -5,6 +5,8 @@ from langchain_core.messages import HumanMessage
 
 
 def safe_preview(value: str, limit: int = 200) -> str:
+    """Return a truncated preview string suitable for logs and traces."""
+    # Keep logs and traces compact while preserving enough context to debug failures.
     return value if len(value) <= limit else f"{value[:limit]}..."
 
 
@@ -16,6 +18,8 @@ def append_tool_trace(
     result: str,
     status: str,
 ) -> None:
+    """Append a normalized tool invocation entry to the tool trace list."""
+    # Store normalized tool activity for UI/debug reporting and loop decisions.
     tool_trace.append(
         {
             "iteration": iteration,
@@ -29,6 +33,8 @@ def append_tool_trace(
 
 
 def has_successful_tool_call(tool_trace: List[Dict[str, Any]], tool_names: tuple[str, ...]) -> bool:
+    """Return True if any named tool has at least one successful trace entry."""
+    # Used by guardrails that depend on whether a specific capability already succeeded.
     return any(
         entry.get("status") == "success" and entry.get("tool") in tool_names
         for entry in tool_trace
@@ -36,6 +42,8 @@ def has_successful_tool_call(tool_trace: List[Dict[str, Any]], tool_names: tuple
 
 
 def latest_user_prompt(messages: List[Any]) -> str:
+    """Return the newest HumanMessage content from a message history."""
+    # Read latest human instruction to infer policy nudges (for example Python execution intent).
     for message in reversed(messages):
         if isinstance(message, HumanMessage):
             return str(message.content)
@@ -48,6 +56,9 @@ def has_repeated_identical_error(
     tool_args: Dict[str, Any],
     repeat_count: int = 3,
 ) -> bool:
+    """Detect repeated consecutive errors for the same tool call arguments."""
+    # Detect repeated identical failures (same tool + same args) in the recent
+    # consecutive error window so the loop can force a strategy change.
     normalized_args = json.dumps(tool_args or {}, sort_keys=True, default=str)
     matched = 0
 
@@ -69,6 +80,8 @@ def has_repeated_identical_error(
 
 
 def execute_tool_call(tool_call: Dict[str, Any], tool_map: Dict[str, Any]) -> Tuple[str, str]:
+    """Invoke a mapped tool call and classify the result as success or error."""
+    # Centralized tool dispatch so status classification is consistent for all tools.
     tool_name = tool_call.get("name")
     tool_args = tool_call.get("args", {})
 

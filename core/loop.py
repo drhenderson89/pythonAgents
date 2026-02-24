@@ -23,6 +23,7 @@ def _emit_tool_event(
     result_preview: str,
     skipped: bool,
 ) -> None:
+    """Emit a normalized callback event for a processed tool call."""
     if not on_tool_event:
         return
 
@@ -46,6 +47,9 @@ def _record_skipped_tool_calls(
     messages: List[Any],
     on_tool_event: Callable[[Dict[str, Any]], None] | None,
 ) -> int:
+    """Record and message extra tool calls skipped by single-tool policy."""
+    # Enforce single-tool-per-turn policy by recording any additional tool calls
+    # as skipped ToolMessages. This keeps model state consistent and auditable.
     skipped_count = 0
     for skipped_index, skipped_call in enumerate(tool_calls[1:], start=1):
         skipped_name = skipped_call.get("name", "unknown")
@@ -88,6 +92,9 @@ def _append_tool_error_guidance(
     run_label: str,
     iteration: int,
 ) -> None:
+    """Append recovery guidance messages after a failed tool invocation."""
+    # Add progressive guidance messages after tool failures so the model retries
+    # with better arguments instead of finalizing prematurely.
     RUNTIME_LOGGER.warning(
         "tool_call_retry_hint label=%s iteration=%s tool=%s",
         run_label,
@@ -206,6 +213,9 @@ def _maybe_nudge_after_repeated_list(
     max_iterations: int,
     run_label: str,
 ) -> None:
+    """Nudge toward Python execution after redundant directory listings."""
+    # If the model keeps listing directories for an execution task, nudge it
+    # toward actually running Python instead of repeating discovery steps.
     if not (
         iteration < max_iterations
         and prompt_requires_python_execution
@@ -239,6 +249,8 @@ def _should_retry_without_tools(
     iteration: int,
     max_iterations: int,
 ) -> bool:
+    """Return True when a no-tool response should trigger a retry nudge."""
+    # Allow one corrective nudge when a tool-capable task receives a plain-text response.
     return (
         likely_requires_tools
         and successful_tool_calls == 0
@@ -254,6 +266,9 @@ def _should_force_python_execution(
     python_tool_executed: bool,
     response_content: str,
 ) -> bool:
+    """Return True when completion should be blocked until Python is executed."""
+    # Detect likely "pseudo-code" answers for Python-required prompts and force
+    # a real tool execution before completion.
     response_has_code_block = "```" in response_content
     return (
         iteration < max_iterations
@@ -268,6 +283,8 @@ def _should_force_python_execution(
 
 
 def _python_execution_escalation_message(no_tool_response_turns: int) -> str:
+    """Build escalating instructions that force a Python execution tool call."""
+    # Escalate instructions after repeated non-tool responses.
     if no_tool_response_turns < 3:
         return (
             "Do not stop at pseudo-code. Execute Python now using the available tool "
@@ -296,6 +313,8 @@ def _should_abort_for_tool_refusal(
     no_tool_response_turns: int,
     refusal_threshold: int = 6,
 ) -> bool:
+    """Return True when repeated tool refusal should end the run."""
+    # Stop early when the model repeatedly refuses tool usage for an execution-required task.
     return (
         likely_requires_tools
         and prompt_requires_python_execution
@@ -305,6 +324,9 @@ def _should_abort_for_tool_refusal(
 
 
 def _has_unresolved_tool_error(tool_trace: List[Dict[str, Any]]) -> bool:
+    """Return True when the latest tool status is an error without later success."""
+    # A final response is not considered safe if the last error happens after
+    # the last success in the tool trace.
     last_error_index = -1
     last_success_index = -1
     for index, entry in enumerate(tool_trace):
@@ -326,6 +348,8 @@ def run_agent_turns(
     on_tool_event: Callable[[Dict[str, Any]], None] | None = None,
     run_label: str = "agent",
 ) -> Dict[str, Any]:
+    """Run the model/tool loop with guardrails until completion or stop conditions."""
+    # Per-turn run state used for guardrails and termination decisions.
     total_tool_calls = 0
     successful_tool_calls = 0
     no_tool_response_turns = 0
@@ -371,6 +395,8 @@ def run_agent_turns(
                 len(tool_calls),
             )
             if tool_calls:
+                # Process only the first tool call each turn; extras are marked skipped
+                # to preserve deterministic tool sequencing.
                 no_tool_response_turns = 0
                 primary_tool_call = tool_calls[0]
                 tool_name = primary_tool_call.get("name", "unknown")
@@ -426,6 +452,7 @@ def run_agent_turns(
                 )
 
                 if status == "error" and iteration < max_iterations:
+                    # Keep the model in a repair loop rather than ending with a failed step.
                     _append_tool_error_guidance(
                         messages=messages,
                         tool_trace=tool_trace,
@@ -487,6 +514,7 @@ def run_agent_turns(
                 python_tool_executed=python_tool_executed,
                 response_content=response_content,
             ):
+                # Prevent "looks-done" textual answers when actual execution output is required.
                 RUNTIME_LOGGER.warning(
                     "python_execution_required_before_finalize label=%s iteration=%s",
                     run_label,

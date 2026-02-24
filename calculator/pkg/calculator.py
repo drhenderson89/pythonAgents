@@ -2,6 +2,7 @@
 
 class Calculator:
     def __init__(self):
+        """Initialize operator handlers and precedence rules."""
         self.operators = {
             "+": lambda a, b: a + b,
             "-": lambda a, b: a - b,
@@ -17,6 +18,7 @@ class Calculator:
         }
 
     def evaluate(self, expression):
+        """Evaluate an arithmetic expression string and return a numeric result."""
         if not expression or expression.isspace():
             return None
         tokens = self._tokenize(expression)
@@ -78,6 +80,7 @@ class Calculator:
         return tokens
 
     def _evaluate_infix(self, tokens):
+        """Evaluate tokenized infix expression using value/operator stacks."""
         values = []
         operators = []
 
@@ -117,6 +120,7 @@ class Calculator:
         return values[0]
 
     def _apply_operator(self, operators, values):
+        """Pop and apply the next operator to the top two values."""
         if not operators:
             return
 

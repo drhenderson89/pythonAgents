@@ -4,6 +4,7 @@ import json
 
 
 def format_json_output(expression: str, result: float, indent: int = 2) -> str:
+    """Format calculator output as a JSON string for CLI display."""
     if isinstance(result, float) and result.is_integer():
         result_to_dump = int(result)
     else:

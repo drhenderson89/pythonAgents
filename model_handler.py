@@ -6,6 +6,7 @@ from langchain_ollama.chat_models import ChatOllama
 
 class ModelHandler:
     def __init__(self, cli_args, config):
+        """Initialize model client and prompt template from CLI/config inputs."""
         self.cli_args = cli_args
         self.config = config
 
@@ -21,6 +22,7 @@ class ModelHandler:
         )
 
     def load_model(self):
+        """Create and return a configured ChatOllama model instance."""
         try:
             return ChatOllama(
                 model=self.cli_args.model,
@@ -34,6 +36,7 @@ class ModelHandler:
             exit(1)
 
     def combine_context(self, related_docs):
+        """Join retrieved document chunks into a single context string."""
         context = ""
         for result in related_docs:
             doc = result[0]
@@ -41,6 +44,7 @@ class ModelHandler:
         return context
 
     def get_response(self, user_input, related_docs, useRAG=False):
+        """Generate a model response with optional retrieval-augmented context."""
         if useRAG:
             # Combine the contents of the related document parts // İlgili belge parçalarının içeriklerini birleştir
             context = self.combine_context(related_docs)

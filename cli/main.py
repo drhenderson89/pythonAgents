@@ -23,6 +23,9 @@ def generate_content_loop(model_with_tools, messages, tool_map, args, max_iterat
             messages.append(HumanMessage(content=user_input))
 
             def on_tool_event(event: dict) -> None:
+                """Render tool execution feedback for verbose or concise CLI modes."""
+                # Keep verbose output detailed for debugging while preserving concise
+                # user-facing mode for normal interaction.
                 if args.verbose:
                     print(
                         f"\n[Iteration {event['iteration']}] Tool={event['tool']} "
@@ -58,6 +61,8 @@ def generate_content_loop(model_with_tools, messages, tool_map, args, max_iterat
 
 
 def main():
+    """Initialize CLI runtime configuration, model, tools, and interaction loop."""
+    # Configuration values are shared across CLI and web runtimes.
     with open("config.json", mode="r", encoding="utf-8") as read_file:
         config = json.load(read_file)
 
@@ -65,6 +70,7 @@ def main():
         description="AI Agent using langchain and ollama")
 
     def parse_arguments():
+        """Parse CLI arguments for model/runtime behavior."""
         parser.add_argument("--model", type=str,
                             default="qwen2.5:7b-instruct", help="Name of the model to use")
         parser.add_argument("--system-prompt", type=str,
@@ -79,6 +85,7 @@ def main():
 
     args = parse_arguments()
     configure_runtime_logger("DEBUG" if args.verbose else "INFO")
+    # Inject execution policy lines into the base prompt (iteration limits, tool rules).
     system_prompt = build_system_prompt(
         args.system_prompt, max_iterations=args.max_iterations)
 
@@ -92,6 +99,7 @@ def main():
 
     available_tools = functions.get_tools()
     model_with_tools = model.bind_tools(available_tools)
+    # Name-to-tool lookup is used by the shared loop to dispatch calls.
     tool_map = {tool.name: tool for tool in available_tools}
 
     if args.verbose:
